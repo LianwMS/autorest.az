@@ -6,34 +6,62 @@
 trigger: none
 pr: none
 
-pool:
-  vmImage: 'ubuntu-latest'
+stages:
+- stage: Tagging
+  jobs:
+  - job: AddTag
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '10.17.0'
+      displayName: 'Install Node.js'
+    - script: |
+        node -p "require('./package.json').version"
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.17.0'
-  displayName: 'Install Node.js'
+- stage: Testing
+  dependsOn: Tagging
+  condition: succeeded()
+  jobs:
+    - job: E2ETest
 
-- script: |
-    # ensure latest npm is installed
-    npm install -g npm 
+- stage: Release
+  dependsOn: Testing
+  condition: succeeded()
+  jobs:
+    - deployment: ReleaseNpm
+      environment: az-npm-release
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '10.17.0'
+                displayName: 'Install Node.js'
 
-    # make sure the versions are all synchronized and pull in dependencies
-    npx @microsoft/rush sync-versions
-    npx @microsoft/rush update 
+              - script: |
+                  # ensure latest npm is installed
+                  npm install -g npm 
 
-    # compile the code
-    npx @microsoft/rush rebuild 
+                  # make sure the versions are all synchronized and pull in dependencies
+                  npx @microsoft/rush sync-versions
+                  npx @microsoft/rush update 
 
-    # build the packages
-    npx @microsoft/rush publish --publish --pack --include-all --tag latest
+                  # compile the code
+                  npx @microsoft/rush rebuild 
 
-    # publish the packages (tag as preview by default)
-    echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
-    for file in common/temp/artifacts/packages/*.tgz 
-    do
-     common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
-    done
-    rm ./.npmrc
+                  # build the packages
+                  npx @microsoft/rush publish --publish --pack --include-all --tag latest
+
+                  # publish the packages (tag as preview by default)
+                  echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
+                  for file in common/temp/artifacts/packages/*.tgz 
+                  do
+                   common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
+                  done
+                  rm ./.npmrc
 
