@@ -7,37 +7,67 @@ trigger: none
 pr: none
 
 stages:
-- stage: Tagging
+- stage: Versioning
+  pool:
+    vmImage: 'ubuntu-latest'
   jobs:
-  - job: AddTag
-    pool:
-      vmImage: 'ubuntu-latest'
+  - job: VersionBump
     steps:
     - task: NodeTool@0
       inputs:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        #node -p "require('./package.json').version"        
-        echo "[LOG: $(date -u)] SET VARIABLE REMOTE_REPO:"
+        echo "[$(date -u)] LOG: SET VARIABLE REMOTE_REPO"
         REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
-        
-        echo "[LOG: $(date -u)] CHECK OUT MASTER BRANCH:"
-        git checkout master
-        
-        echo "[LOG: $(date -u)] ADD TAG $(Build.BuildNumber):"
+
+        echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
+        git checkout master -f
+
+        echo "[$(date -u)] LOG: GET CURRENT VERSION"
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+        NEW_VERSION=$(npm version --git-tag-version=false patch)
+        echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
+
+        echo "[$(date -u)] LOG: COMMIT AND PUSH:"
+        #git commit -a -m "auto version bump to $NEW_VERSION"
+        #git push $REMOTE_REPO master
+      displayName: 'Version Bump'
+      failOnStderr: true
+  - job: AddTag
+    dependsOn: VersionBump
+    condition: succeeded()
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '10.17.0'
+      displayName: 'Install Node.js'      
+    - script: |
+        #node -p "require('./package.json').version" 
+        echo "[$(date -u)] LOG: SET VARIABLE REMOTE_REPO"
+        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
+
+        echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH："
+        git checkout master -f
+
+        echo "[$(date -u)] LOG: GET LATEST TAG:"
+        git describe --tags $(git rev-list --tags --max-count=1)
+
+        echo "[$(date -u)] LOG: ADD TAG $(Build.BuildNumber)"
         git tag $(Build.BuildNumber)
-        
-        echo "[LOG: $(date -u)] GET CURRENT TAGS:"
-        git tag -l
-        
-        echo "[LOG: $(date -u)] PUSH TAG:"
-        git push $REMOTE_REPO --follow-tags        
-        git push $REMOTE_REPO --tags
+
+        echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
+        git describe --tags $(git rev-list --tags --max-count=1)
+
+        #echo "[$(date -u)] LOG: PUSH TAG:"
+        #git push $REMOTE_REPO --follow-tags
+        #git push $REMOTE_REPO --tags
       displayName: 'Add Tag'
-    
+      failOnStderr: true
 - stage: Testing
-  dependsOn: Tagging
+  dependsOn: Versioning
   condition: succeeded()
   jobs:
     - job: e2e
