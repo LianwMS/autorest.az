@@ -18,7 +18,7 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        Agent.JobStatus="Cancel"
+        AGENT_JOBSTATUS="Cancel"
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
       displayName: 'Checkout master'
@@ -28,7 +28,7 @@ stages:
         echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
 
         if [ "$LAST_AUTHOR" = "Automated Version Bump" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
-      displayName: 'Validating'
+      displayName: 'Validate'
 
     - script: |
         echo "[$(date -u)] LOG: SET VARIABLES"
