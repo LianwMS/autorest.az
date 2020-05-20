@@ -18,31 +18,31 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
+
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
       displayName: 'Checkout master'
     - script: |
-        echo "SET VARIABLE"
+        echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
         git config user.email 'amecodegen@outlook.com'
-        echo "[$(date -u)] LOG: SET VARIABLE REMOTE_REPO"
         REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
-      displayName: 'Set Variable'
-    - script: |
 
         echo "[$(date -u)] LOG: GET CURRENT VERSION"
         CURRENT_VERSION=$(node -p "require('./package.json').version")
-
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
         NEW_VERSION=$(npm version --git-tag-version=false patch)
         echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
-
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
         git commit -a -m "auto version bump to $NEW_VERSION"
-        git push $REMOTE_REPO master
+        git push $REMOTE_REPO
       displayName: 'Version Bump'
       failOnStderr: true
     - script: |
+        echo "[$(date -u)] LOG: SET VARIABLES"
+        git config user.name 'Automated Version Bump'
+        git config user.email 'amecodegen@outlook.com'
+        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
 
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
