@@ -27,7 +27,7 @@ stages:
         git config user.email 'amecodegen@outlook.com'
         echo "[$(date -u)] LOG: SET VARIABLE REMOTE_REPO"
         REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
-      displayName: 'Set Variable"
+      displayName: 'Set Variable'
     - script: |
 
         echo "[$(date -u)] LOG: GET CURRENT VERSION"
