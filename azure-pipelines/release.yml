@@ -18,23 +18,24 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        node -p "require('./package.json').version"
+        #node -p "require('./package.json').version"        
+        echo "[LOG: $(date -u)] SET VARIABLE REMOTE_REPO:"
+        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
         
-        echo $(Build.BuildNumber)
-        
+        echo "[LOG: $(date -u)] CHECK OUT MASTER BRANCH:"
         git checkout master
         
+        echo "[LOG: $(date -u)] ADD TAG $(Build.BuildNumber):"
         git tag $(Build.BuildNumber)
         
+        echo "[LOG: $(date -u)] GET CURRENT TAGS:"
         git tag -l
         
-        set remoterepo=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
-      
-        git push https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git --follow-tags
-        
-        git push https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git --tags
-      displayName: 'Add Tag Script'
-
+        echo "[LOG: $(date -u)] PUSH TAG:"
+        git push $REMOTE_REPO --follow-tags        
+        git push $REMOTE_REPO --tags
+      displayName: 'Add Tag'
+    
 - stage: Testing
   dependsOn: Tagging
   condition: succeeded()
