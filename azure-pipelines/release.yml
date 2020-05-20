@@ -17,18 +17,21 @@ stages:
       inputs:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
-    - bash: |
+    - script: |
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
-      displayName: 'Checkout master'
 
-    - bash: |
+        LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
+        echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
+
+        if [ "$LAST_AUTHOR" = "Automated Version Bump" ]; then echo "No Need Run Pipeline"; exit 1; fi
+      displayName: 'Checkout master'
+    - script: |
         echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
         git config user.email 'amecodegen@outlook.com'
-        #REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
+        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
 
-        echo "[$(date -u)] LOG: GET CURRENT VERSION"
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
         NEW_VERSION=$(npm version --git-tag-version=false patch)
@@ -38,10 +41,8 @@ stages:
         git push $REMOTE_REPO
       displayName: 'Version Bump'
 
-    - bash: |
+    - script: |
         echo "[$(date -u)] LOG: SET VARIABLES"
-        git config user.name 'Automated Version Bump'
-        git config user.email 'amecodegen@outlook.com'
         REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
 
         echo "[$(date -u)] LOG: GET LATEST TAG:"
