@@ -17,15 +17,16 @@ stages:
       inputs:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
-    - script: |
+    - bash: |
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
       displayName: 'Checkout master'
+
     - bash: |
         echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
         git config user.email 'amecodegen@outlook.com'
-        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
+        #REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
 
         echo "[$(date -u)] LOG: GET CURRENT VERSION"
         CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -36,6 +37,7 @@ stages:
         git commit -a -m "Auto version bump to $NEW_VERSION"
         git push $REMOTE_REPO
       displayName: 'Version Bump'
+
     - bash: |
         echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
@@ -55,6 +57,7 @@ stages:
         git push $REMOTE_REPO --follow-tags
         git push $REMOTE_REPO --tags
       displayName: 'Add Tag'
+
 - stage: Testing
   dependsOn: Versioning
   condition: succeeded()
