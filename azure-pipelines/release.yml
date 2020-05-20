@@ -21,7 +21,7 @@ stages:
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
       displayName: 'Checkout master'
-    - script: |
+    - bash: |
         echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
         git config user.email 'amecodegen@outlook.com'
@@ -36,7 +36,7 @@ stages:
         git commit -a -m "Auto version bump to $NEW_VERSION"
         git push $REMOTE_REPO
       displayName: 'Version Bump'
-    - script: |
+    - bash: |
         echo "[$(date -u)] LOG: SET VARIABLES"
         git config user.name 'Automated Version Bump'
         git config user.email 'amecodegen@outlook.com'
@@ -55,7 +55,6 @@ stages:
         git push $REMOTE_REPO --follow-tags
         git push $REMOTE_REPO --tags
       displayName: 'Add Tag'
-      failOnStderr: true
 - stage: Testing
   dependsOn: Versioning
   condition: succeeded()
