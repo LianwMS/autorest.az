@@ -42,7 +42,7 @@ stages:
         git config --global user.name '$(user.name)'
         git config --global user.email '$(user.email)'
         git remote -v
-        git remote add origin 'https://$(user.githubToken)@github.com/LianwMS/autorest.az.git'
+        git remote add originpat 'https://$(user.githubToken)@github.com/LianwMS/autorest.az.git'
         git remote -v
       displayName: 'Checkout'
 
@@ -63,7 +63,7 @@ stages:
         echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
         git commit -a -m "$(user.commitMessage) $NEW_VERSION"
-        git push $REMOTE_REPO
+        git push originpat
       displayName: 'Version Bump'
 
     - script: |
@@ -80,8 +80,8 @@ stages:
         git describe --tags $(git rev-list --tags --max-count=1)
 
         echo "[$(date -u)] LOG: PUSH TAG:"
-        git push $REMOTE_REPO --follow-tags
-        git push $REMOTE_REPO --tags
+        git push originpat --follow-tags
+        git push originpat --tags
       displayName: 'Add Tag'
 
 - stage: Testing
