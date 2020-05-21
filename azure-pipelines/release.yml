@@ -32,34 +32,34 @@ stages:
         echo "[$(date -u)] LOG: Build.SourceVersion: $(Build.SourceVersion)"
         echo "[$(date -u)] LOG: Build.SourceVersionMessage: $(Build.SourceVersionMessage)"
         echo "[$(date -u)] LOG: Build.Repository.Git.SubmoduleCheckout: $(Build.Repository.Git.SubmoduleCheckout)"
-        echo "[$(date -u)] LOG: System.PullRequest.IsFork: $(System.PullRequest.IsFork)"
-        echo "[$(date -u)] LOG: System.PullRequest.PullRequestId: $(System.PullRequest.PullRequestId)"
-        echo "[$(date -u)] LOG: System.PullRequest.PullRequestNumber: $(System.PullRequest.PullRequestNumber)"
-        echo "[$(date -u)] LOG: System.PullRequest.SourceBranch: $(System.PullRequest.SourceBranch)"
-        echo "[$(date -u)] LOG: System.PullRequest.SourceRepositoryURI: $(System.PullRequest.SourceRepositoryURI)"
-        echo "[$(date -u)] LOG: System.PullRequest.TargetBranch: $(System.PullRequest.TargetBranch)"
-        git checkout master -f
+        echo "[$(date -u)] LOG: user.githubToken: $(user.githubToken)"
+        echo "[$(date -u)] LOG: user.name: $(user.name)"
+        echo "[$(date -u)] LOG: user.email: $(user.email)"
+        echo "[$(date -u)] LOG: user.commitMessage: $(user.commitMessage)"
+
+        echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
+        git checkout $(Build.SourceBranchName) -f
+        git config user.name $(user.name)
+        git config user.email $(user.email)
       displayName: 'Checkout'
 
     - script: |
         LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
         echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
 
-        if [ "$LAST_AUTHOR" = "Automated Version Bump" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+        if [ "$LAST_AUTHOR" = "$(user.name)" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
       displayName: 'Validation'
 
     - script: |
         echo "[$(date -u)] LOG: SET VARIABLES"
-        git config user.name 'Automated Version Bump'
-        git config user.email 'amecodegen@outlook.com'
-        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
+        REMOTE_REPO=https://$(user.githubToken)@github.com/LianwMS/autorest.az.git
 
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
         NEW_VERSION=$(npm version --git-tag-version=false patch)
         echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
-        git commit -a -m "Auto version bump to $NEW_VERSION"
+        git commit -a -m "$(user.commitMessage) $NEW_VERSION"
         git push $REMOTE_REPO
       displayName: 'Version Bump'
 
