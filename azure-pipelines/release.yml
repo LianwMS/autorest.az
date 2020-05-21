@@ -5,6 +5,12 @@
 
 trigger: none
 pr: none
+schedules:
+- cron: "0 20 * * *"
+  displayName: "4AM (UTC +8) daily release"
+  branches:
+    include:
+    - master
 
 stages:
 - stage: Versioning
@@ -18,16 +24,20 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
+        echo "[$(date -u)] LOG: Build.SourceBranch: $(Build.SourceBranch)"
+        echo "[$(date -u)] LOG: Build.SourceBranchName: $(Build.SourceBranchName)"
+        echo "[$(date -u)] LOG: Build.Repository.Name: $(Build.Repository.Name)"
+        echo "[$(date -u)] LOG: Build.Repository.Provider: $(Build.Repository.Provider)"
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
-      displayName: 'Checkout master'
+      displayName: 'Checkout'
 
     - script: |
         LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
         echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
 
         if [ "$LAST_AUTHOR" = "Automated Version Bump" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
-      displayName: 'Validate'
+      displayName: 'Validation'
 
     - script: |
         echo "[$(date -u)] LOG: SET VARIABLES"
