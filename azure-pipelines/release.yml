@@ -18,7 +18,6 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        AGENT_JOBSTATUS="Cancel"
         echo "[$(date -u)] LOG: CHECK OUT MASTER BRANCH:"
         git checkout master -f
       displayName: 'Checkout master'
