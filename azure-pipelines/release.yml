@@ -39,8 +39,11 @@ stages:
 
         echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
         git checkout $(Build.SourceBranchName) -f
-        git config user.name $(user.name)
-        git config user.email $(user.email)
+        git config --global user.name '$(user.name)'
+        git config --global user.email '$(user.email)'
+        git remote -v
+        git remote add origin 'https://$(user.githubToken)@github.com/LianwMS/autorest.az.git'
+        git remote -v
       displayName: 'Checkout'
 
     - script: |
