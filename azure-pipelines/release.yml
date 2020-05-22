@@ -94,11 +94,11 @@ stages:
       variables:
         varFromStageA: $[ stageDependencies.Versioning.versionbump.outputs['vbump.sauce'] ]
       steps:
-      - script:|
-          echo “variablefromStageA: $(varFromStageA)”
+      - script: |
+          echo "[$(date -u)] LOG: varFromStageA: $(varFromStageA)"
           varFromStageA="TEST"
-      - script:|
-          echo “variablefromStageA: $(varFromStageA)”
+      - script: |
+          echo "[$(date -u)] LOG: varFromStageA: $(varFromStageA)"
       - task: GitHubRelease@1
         inputs:
           gitHubConnection: 'amecodegenbot'
