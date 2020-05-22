@@ -101,8 +101,16 @@ stages:
           git checkout $VAR_REPO_BRANCHNAME -f
 
           npm install -g npm
-          npm install
-          npm pack
+          #npm install
+          #npm pack
+          npx @microsoft/rush sync-versions
+          npx @microsoft/rush update 
+
+          # compile the code
+          npx @microsoft/rush rebuild 
+
+          # build the packages
+          npx @microsoft/rush publish --publish --pack --include-all --tag latest
 
           echo "[$(date -u)] LOG: PWD TO $PWD"
           echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
