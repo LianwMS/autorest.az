@@ -100,20 +100,30 @@ stages:
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
 
+          echo "[$(date -u)] LOG: ENSURE LATEST NPM IS INSTALLED"
           npm install -g npm
-          #npm install
-          #npm pack
+
+          echo "[$(date -u)] LOG: MAKE SURE THE VERSIONS ARE ALL SYNCHRONIZED AND PULL IN DEPENDENCIES"
           npx @microsoft/rush sync-versions
           npx @microsoft/rush update 
 
-          # compile the code
+          echo "[$(date -u)] LOG: COMPILE THE CODE"
           npx @microsoft/rush rebuild 
 
-          # build the packages
+          echo "[$(date -u)] LOG: BUILD PACKAGE"
           npx @microsoft/rush publish --publish --pack --include-all --tag latest
 
           echo "[$(date -u)] LOG: PWD TO $PWD"
           echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
+          for file in $(Build.ArtifactStagingDirectory)/*.tgz 
+          do
+            echo "[$(date -u)] LOG: $file"
+          done
+
+          for file in common/temp/artifacts/packages/*.tgz 
+          do
+            echo "[$(date -u)] LOG: $file"
+          done
 
           RELEASE_VERSION="$(node -p "require('./package.json').version")b"
           echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
@@ -122,7 +132,7 @@ stages:
           COMMIT_VERSION=$(git log --pretty=%H -1)
           echo "[$(date -u)] LOG: COMMIT VERSION: $COMMIT_VERSION"
           echo "##vso[task.setvariable variable=commit;isOutput=true]$COMMIT_VERSION"
-        name: getVersions
+        name: GetVersions
       - task: GitHubRelease@1
         inputs:
           gitHubConnection: 'amecodegenbot'
