@@ -11,6 +11,19 @@ schedules:
   branches:
     include:
     - master
+    
+variables:
+  VAR_USER_NAME: $(user.name)
+  VAR_USER_EMAIL: $(user.email)
+  VAR_REPO_URL: $(Build.Repository.Uri)
+  VAR_REPO_URL_FIND: "github"
+  VAR_REPO_PAT: $(user.githubToken)  
+  VAR_REPO_URL_REPLACE:"$VAR_REPO_PAT@$REPO_FIND"
+  VAR_REPO_URL_PAT:${VAR_REPO_URL/$VAR_REPO_URL_FIND/$VAR_REPO_URL_REPLACE}
+  VAR_REPO_BRANCHNAME: $(Build.SourceBranchName)
+  VAR_USER_VERION: $(user.version)
+  VAR_USER_COMMIT_MESSAGE: $(user.commitMessage)
+  VAR_USER_TAG: $(user.tag)
 
 stages:
 - stage: Versioning
@@ -24,22 +37,13 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        REPO_OLDURL=$(Build.Repository.Uri)
-        REPO_FIND="github"
-        REPO_REPLACE="$(user.githubToken)@$REPO_FIND"
-        echo "[$(date -u)] LOG: REPO_OLDURL: $REPO_OLDURL"
-        echo "[$(date -u)] LOG: REPO_FIND: $REPO_FIND"
-        echo "[$(date -u)] LOG: REPO_REPLACE: $REPO_REPLACE"
-
-        REPO_URL=${REPO_OLDURL/$REPO_FIND/$REPO_REPLACE}
-        echo "[$(date -u)] LOG: REPO_URL: $REPO_URL"
-
-        echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
-        git checkout $(Build.SourceBranchName) -f
+        
+        echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
+        git checkout $VAR_REPO_BRANCHNAME -f
         echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
-        git config --global user.name '$(user.name)'
-        git config --global user.email '$(user.email)'
-        git remote add originpat $REPO_URL
+        git config --global user.name '$VAR_USER_NAME'
+        git config --global user.email '$VAR_USER_EMAIL'
+        git remote add originpat $VAR_REPO_URL_PAT
         git remote -v
       displayName: 'Checkout and Config'
 
@@ -47,19 +51,18 @@ stages:
         LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
         echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
 
-        if [ "$LAST_AUTHOR" = "$(user.name)" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+        if [ "$LAST_AUTHOR" = "$VAR_USER_NAME" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
       displayName: 'Validation'
 
     - script: |
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-        NEW_VERSION=$(npm version --git-tag-version=false patch)
-        echo "##vso[task.setvariable variable=user.version]$NEW_VERSION"
-        echo "[$(date -u)] LOG: NEW VERSION: $(user.version)"
+        VAR_USER_VERION=$(npm version --git-tag-version=false patch)
+        echo "[$(date -u)] LOG: NEW VERSION: $VAR_USER_VERION"
 
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
-        git commit -a -m "$(user.commitMessage) $(user.version)"
+        git commit -a -m "$VAR_USER_COMMIT_MESSAGE $VAR_USER_VERION"
         git push originpat
       displayName: 'Version Bump'
 
@@ -68,9 +71,9 @@ stages:
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
 
-        USER_TAG=$(Build.BuildNumber)
-        echo "[$(date -u)] LOG: ADD TAG $(user.tag)"
-        git tag $(user.tag)
+        VAR_USER_TAG=$(Build.BuildNumber)
+        echo "[$(date -u)] LOG: ADD TAG $VAR_USER_TAG"
+        git tag $VAR_USER_TAG
 
         echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
@@ -99,7 +102,7 @@ stages:
           action: 'create'
           target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
-          tag: '$(user.version)'
+          tag: '$VAR_USER_VERION'
           isPreRelease: true
           addChangeLog: false
 
