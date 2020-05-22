@@ -17,9 +17,9 @@ variables:
   VAR_USER_EMAIL: $(user.email)
   VAR_REPO_URL: $(Build.Repository.Uri)
   VAR_REPO_URL_FIND: "github"
-  VAR_REPO_PAT: $(user.githubToken)  
-  VAR_REPO_URL_REPLACE:"$VAR_REPO_PAT@$REPO_FIND"
-  VAR_REPO_URL_PAT:${VAR_REPO_URL/$VAR_REPO_URL_FIND/$VAR_REPO_URL_REPLACE}
+  VAR_REPO_PAT: $(user.githubToken)
+  VAR_REPO_URL_REPLACE: $VAR_REPO_PAT@$REPO_FIND
+  VAR_REPO_URL_PAT: ${VAR_REPO_URL/$VAR_REPO_URL_FIND/$VAR_REPO_URL_REPLACE}
   VAR_REPO_BRANCHNAME: $(Build.SourceBranchName)
   VAR_USER_VERION: $(user.version)
   VAR_USER_COMMIT_MESSAGE: $(user.commitMessage)
