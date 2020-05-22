@@ -60,23 +60,7 @@ stages:
         echo "[$(date -u)] LOG: COMMIT and PUSH"
         git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
         git push originpat
-
       displayName: 'Version Bump'
-
-    #- script: |
-    #    echo "[$(date -u)] LOG: GET LATEST TAG:"
-    #    git describe --tags $(git rev-list --tags --max-count=1)
-
-    #    echo "[$(date -u)] LOG: ADD TAG $VAR_BUILD_NUMBER"
-    #    git tag $VAR_BUILD_NUMBER
-
-    #    echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
-    #    git describe --tags $(git rev-list --tags --max-count=1)
-
-    #    echo "[$(date -u)] LOG: PUSH TAG:"
-    #    git push originpat --follow-tags
-    #    git push originpat --tags
-    #  displayName: 'Add Tag'
 
 - stage: Testing
   dependsOn: Versioning
