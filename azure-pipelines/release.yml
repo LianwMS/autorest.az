@@ -101,6 +101,7 @@ stages:
           git checkout $VAR_REPO_BRANCHNAME -f
 
           npm install -g npm
+          npm install
           npm pack
 
           echo "[$(date -u)] LOG: PWD TO $PWD"
