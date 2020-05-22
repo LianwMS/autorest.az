@@ -55,7 +55,7 @@ stages:
 
         USER_NEW_VERSION=$(npm version --git-tag-version=false patch)
 
-        echo "##vso[task.setvariable variable=sauce]$USER_NEW_VERSION"
+        echo "##vso[task.setvariable variable=sauce;isOutput=true]$USER_NEW_VERSION"
         echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
 
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
@@ -91,6 +91,8 @@ stages:
   condition: succeeded()
   jobs:
     - job: github
+      variables:
+        varFromStageA: $[ stageDependencies.Versioning.versionbump.outputs['vbump.sauce'] ]
       steps:
       - task: GitHubRelease@1
         inputs:
@@ -99,7 +101,7 @@ stages:
           action: 'create'
           target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
-          tag: "$[stageDependencies.Versioning.versionbump.outputs['vbump.sauce']]"
+          tag: '$(varFromStageA)'
           isPreRelease: true
           addChangeLog: false
 
