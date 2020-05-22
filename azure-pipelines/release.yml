@@ -83,7 +83,7 @@ stages:
   jobs:
     - job: e2e
 
-- stage: Release
+- stage: PrivateRelease
   dependsOn: Testing
   condition: succeeded()
   jobs:
@@ -99,6 +99,11 @@ stages:
           #tag: '$Test_Tag'
           isPreRelease: true
           addChangeLog: false
+
+- stage: PublicRelease
+  dependsOn: Testing
+  condition: succeeded()
+  jobs:
     - deployment: npmjs
       environment: az-npm-release
       pool:
