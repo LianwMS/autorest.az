@@ -20,13 +20,13 @@ variables:
 stages:
 - stage: Versioning
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-18.04'
   jobs:
   - job: VersionBump
     steps:
     - task: NodeTool@0
       inputs:
-        versionSpec: '12.x'
+        versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
