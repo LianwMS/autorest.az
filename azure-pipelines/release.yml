@@ -89,7 +89,13 @@ stages:
   condition: succeeded()
   jobs:
     - job: Github
+      pool:
+        vmImage: 'ubuntu-latest'
       steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '10.17.0'
+        displayName: 'Install Node.js'
       - script: |
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
