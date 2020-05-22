@@ -18,8 +18,6 @@ variables:
   VAR_REPO_URL: $(Build.Repository.Uri)
   VAR_REPO_URL_FIND: "github"
   VAR_REPO_PAT: $(user.githubToken)
-  VAR_REPO_URL_REPLACE: $VAR_REPO_PAT@$REPO_FIND
-  VAR_REPO_URL_PAT: ${VAR_REPO_URL/$VAR_REPO_URL_FIND/$VAR_REPO_URL_REPLACE}
   VAR_REPO_BRANCHNAME: $(Build.SourceBranchName)
   VAR_USER_VERION: $(user.version)
   VAR_USER_COMMIT_MESSAGE: $(user.commitMessage)
@@ -37,13 +35,15 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        
+        REPO_URL_REPLACE="$(user.githubToken)@$VAR_REPO_URL_FIND"
+        REPO_URL_PAT=${VAR_REPO_URL/$VAR_REPO_URL_FIND/$REPO_URL_REPLACE}
+
         echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
         git checkout $VAR_REPO_BRANCHNAME -f
         echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
         git config --global user.name '$VAR_USER_NAME'
         git config --global user.email '$VAR_USER_EMAIL'
-        git remote add originpat $VAR_REPO_URL_PAT
+        git remote add originpat $REPO_URL_PAT
         git remote -v
       displayName: 'Checkout and Config'
 
@@ -68,6 +68,7 @@ stages:
 
     - script: |
         echo "[$(date -u)] LOG: VERSION: $(user.version)"
+        echo "[$(date -u)] LOG: VERSION: $VAR_USER_VERION"
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
 
