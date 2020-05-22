@@ -28,6 +28,7 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
+        echo "[$(date -u)] LOG: USER_PAT: $USER_PAT"
         REPO_URL_REPLACE="$USER_PAT@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
 
