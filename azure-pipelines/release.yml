@@ -58,10 +58,15 @@ stages:
 
         echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
 
-        echo "[$(date -u)] LOG: COMMIT AND PUSH:"
+        echo "[$(date -u)] LOG: COMMIT"
         git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
-        git push originpat
 
+        USER_NEW_TAG="${USER_NEW_VERSION}b"
+        echo "[$(date -u)] LOG: ADD TAG $USER_NEW_TAG"
+        git tag $USER_NEW_TAG
+
+        echo "[$(date -u)] LOG: PUSH"
+        git push originpat --tags
 
       displayName: 'Version Bump'
 
@@ -96,9 +101,9 @@ stages:
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
 
-          RELEASE_VERSION=$(node -p "require('./package.json').version")b
-          echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
-          echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
+          #RELEASE_VERSION=$(node -p "require('./package.json').version")
+          #echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
+          #echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
           COMMIT_VERSION=$(git log --pretty=%H -1)
           echo "[$(date -u)] LOG: COMMIT VERSION: $COMMIT_VERSION"
