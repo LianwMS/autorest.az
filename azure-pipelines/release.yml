@@ -33,12 +33,12 @@ stages:
         echo "[$(date -u)] LOG: user.commitMessage: $(user.commitMessage)"
 
         REPO_OLDURL=$(Build.Repository.Uri)
-        REPO_FIND='github'
-        REPO_REPLACE='$(user.githubToken)@$REPO_FIND'
+        REPO_FIND="github"
+        REPO_REPLACE="$(user.githubToken)@$REPO_FIND"
         echo "[$(date -u)] LOG: REPO_OLDURL: $REPO_OLDURL"
         echo "[$(date -u)] LOG: REPO_FIND: $REPO_FIND"
         echo "[$(date -u)] LOG: REPO_REPLACE: $REPO_REPLACE"
-        REPO_URL=${REPO_OLDURL/REPO_FIND/$REPO_REPLACE}
+        REPO_URL=${REPO_OLDURL/$REPO_FIND/$REPO_REPLACE}
         echo "[$(date -u)] LOG: REPO_URL: $REPO_URL"
 
         echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
