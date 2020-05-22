@@ -24,20 +24,13 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        echo "[$(date -u)] LOG: Build.SourceBranch: $(Build.SourceBranch)"
-        echo "[$(date -u)] LOG: Build.SourceBranchName: $(Build.SourceBranchName)"
-        echo "[$(date -u)] LOG: Build.Repository.Name: $(Build.Repository.Name)"
-        echo "[$(date -u)] LOG: Build.Repository.Provider: $(Build.Repository.Provider)"
-        echo "[$(date -u)] LOG: Build.Repository.Uri: $(Build.Repository.Uri)"
-        echo "[$(date -u)] LOG: Build.SourceVersionMessage: $(Build.SourceVersionMessage)"
-        echo "[$(date -u)] LOG: user.commitMessage: $(user.commitMessage)"
-
         REPO_OLDURL=$(Build.Repository.Uri)
         REPO_FIND="github"
         REPO_REPLACE="$(user.githubToken)@$REPO_FIND"
         echo "[$(date -u)] LOG: REPO_OLDURL: $REPO_OLDURL"
         echo "[$(date -u)] LOG: REPO_FIND: $REPO_FIND"
         echo "[$(date -u)] LOG: REPO_REPLACE: $REPO_REPLACE"
+
         REPO_URL=${REPO_OLDURL/$REPO_FIND/$REPO_REPLACE}
         echo "[$(date -u)] LOG: REPO_URL: $REPO_URL"
 
@@ -46,7 +39,7 @@ stages:
         echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
         git config --global user.name '$(user.name)'
         git config --global user.email '$(user.email)'
-        git remote add originpat 'https://$(user.githubToken)@github.com/LianwMS/autorest.az.git'
+        git remote add originpat $REPO_URL
         git remote -v
       displayName: 'Checkout and Config'
 
