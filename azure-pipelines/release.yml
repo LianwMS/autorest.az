@@ -54,20 +54,22 @@ stages:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-        NEW_VERSION=$(npm version --git-tag-version=false patch)
-        echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
+        $(user.version)=$(npm version --git-tag-version=false patch)
+        echo "[$(date -u)] LOG: NEW VERSION: $(user.version)"
 
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
-        git commit -a -m "$(user.commitMessage) $NEW_VERSION"
+        git commit -a -m "$(user.commitMessage) $(user.version)"
         git push originpat
       displayName: 'Version Bump'
 
     - script: |
+        echo "[$(date -u)] LOG: VERSION: $(user.version)"
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
 
-        echo "[$(date -u)] LOG: ADD TAG $(Build.BuildNumber)"
-        git tag $(Build.BuildNumber)
+        $(user.tag)=$(Build.BuildNumber)
+        echo "[$(date -u)] LOG: ADD TAG $(user.tag)"
+        git tag $(user.tag)
 
         echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
@@ -95,8 +97,8 @@ stages:
           repositoryName: 'LianwMS/autorest.az'
           action: 'create'
           target: '$(Build.SourceVersion)'
-          tagSource: 'gitTag'
-          #tag: '$Test_Tag'
+          tagSource: 'userSpecifiedTag'
+          tag: '$(user.version)'
           isPreRelease: true
           addChangeLog: false
 
