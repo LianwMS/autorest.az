@@ -54,7 +54,7 @@ stages:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-        $(user.version)=$(npm version --git-tag-version=false patch)
+        user_version=$(npm version --git-tag-version=false patch)
         echo "[$(date -u)] LOG: NEW VERSION: $(user.version)"
 
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
@@ -67,7 +67,7 @@ stages:
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
 
-        $(user.tag)=$(Build.BuildNumber)
+        user_tag=$(Build.BuildNumber)
         echo "[$(date -u)] LOG: ADD TAG $(user.tag)"
         git tag $(user.tag)
 
