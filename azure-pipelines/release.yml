@@ -73,7 +73,7 @@ stages:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-          RELEASE_VERSION="$(npm version --git-tag-version=false patch)-b.$VAR_BUILD_NUMBER"
+          RELEASE_VERSION="$(npm version --git-tag-version=false $(USER_VERSION_BUMP_TYPE))-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
@@ -128,7 +128,7 @@ stages:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-        USER_NEW_VERSION=$(npm version --git-tag-version=false patch)
+        USER_NEW_VERSION=$(npm version --git-tag-version=false $(USER_VERSION_BUMP_TYPE))
 
         echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
 
@@ -139,7 +139,7 @@ stages:
 
 
 - stage: PublicRelease
-  dependsOn: PrivateRelease
+  dependsOn: Versioning
   condition: succeeded()
   jobs:
     - deployment: npmjs
