@@ -32,7 +32,7 @@ stages:
         echo "[$(date -u)] LOG: Build.SourceVersionMessage: $(Build.SourceVersionMessage)"
         echo "[$(date -u)] LOG: user.commitMessage: $(user.commitMessage)"
 
-        REPO_URL=${Build_Repository_Uri/'github'/$(user.githubToken)@github}
+        REPO_URL=${Build.Repository.Uri/'github'/$(user.githubToken)@github}
         echo "[$(date -u)] LOG: REPO_URL: $REPO_URL"
 
         echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
