@@ -29,7 +29,6 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
 
@@ -94,6 +93,12 @@ stages:
       - script: |
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
+
+          npm install -g npm
+          npm pack
+
+          echo "[$(date -u)] LOG: PWD TO $PWD"
+          echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
 
           RELEASE_VERSION="$(node -p "require('./package.json').version")b"
           echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
