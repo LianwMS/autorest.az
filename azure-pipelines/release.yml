@@ -25,26 +25,8 @@ stages:
   jobs:
     - job: E2E
 
-- stage: Validation
-  dependsOn: Testing
-  jobs:
-    - job: Check
-      pool:
-        vmImage: 'ubuntu-latest'
-      steps:
-      - script: |
-          LAST_TAG_COMMIT_HASH=$(git rev-list --tags --max-count=1)
-          echo "[$(date -u)] LOG: LAST_TAG_COMMIT_HASH: $LAST_TAG_COMMIT_HASH"
-
-          LAST_TAG=$(git describe --tags $LAST_TAG_COMMIT_HASH)
-          echo "[$(date -u)] LOG: LAST_TAG: $LAST_TAG"
-          echo "[$(date -u)] LOG: VAR_BUILD_VERSION: $VAR_BUILD_VERSION"
-          echo "[$(date -u)] LOG: VAR_BUILD_RESION: $VAR_BUILD_RESION"
-          if [ "$LAST_TAG_COMMIT_HASH" = "$VAR_BUILD_VERSION" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
-        name: CheckTag
-
 - stage: PrivateRelease
-  dependsOn: Validation
+  dependsOn: Testing
   condition: succeeded()
   jobs:
     - job: Github
@@ -55,6 +37,27 @@ stages:
         inputs:
           versionSpec: '10.17.0'
         displayName: 'Install Node.js'
+      - script: |
+          LAST_TAG_COMMIT_HASH=$(git rev-list --tags --max-count=1)
+          echo "[$(date -u)] LOG: LAST_TAG_COMMIT_HASH: $LAST_TAG_COMMIT_HASH"
+
+          LAST_TAG=$(git describe --tags $LAST_TAG_COMMIT_HASH)
+          echo "[$(date -u)] LOG: LAST_TAG: $LAST_TAG"
+          echo "[$(date -u)] LOG: VAR_BUILD_VERSION: $VAR_BUILD_VERSION"
+          echo "[$(date -u)] LOG: VAR_BUILD_RESION: $VAR_BUILD_RESION"
+          if [ "$LAST_TAG_COMMIT_HASH" = "$VAR_BUILD_VERSION" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+        name: Validation
+      - script: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+          RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
+          echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
+          echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
+
+          COMMIT_VERSION=$(git log --pretty=%H -1)
+          echo "[$(date -u)] LOG: COMMIT VERSION: $COMMIT_VERSION"
+          echo "##vso[task.setvariable variable=commit;isOutput=true]$COMMIT_VERSION"
+        name: GetVersions
       - script: |
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
@@ -71,15 +74,7 @@ stages:
 
           echo "[$(date -u)] LOG: BUILD PACKAGE"
           npx @microsoft/rush publish --publish --pack --include-all --tag latest
-
-          RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
-          echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
-          echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
-
-          COMMIT_VERSION=$(git log --pretty=%H -1)
-          echo "[$(date -u)] LOG: COMMIT VERSION: $COMMIT_VERSION"
-          echo "##vso[task.setvariable variable=commit;isOutput=true]$COMMIT_VERSION"
-        name: GetVersions
+        name: Packing
       - task: GitHubRelease@1
         inputs:
           gitHubConnection: 'amecodegenbot'
