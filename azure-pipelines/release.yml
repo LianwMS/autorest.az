@@ -87,6 +87,18 @@ stages:
   dependsOn: Testing
   condition: succeeded()
   jobs:
+    - job: github
+      steps:
+      - task: GitHubRelease@1
+        inputs:
+          gitHubConnection: 'amecodegenbot'
+          repositoryName: 'LianwMS/autorest.az'
+          action: 'create'
+          target: '$(Build.SourceVersion)'
+          tagSource: 'gitTag'
+          #tag: '$Test_Tag'
+          isPreRelease: true
+          addChangeLog: false
     - deployment: npmjs
       environment: az-npm-release
       pool:
