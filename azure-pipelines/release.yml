@@ -58,14 +58,16 @@ stages:
 
         echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
 
-        echo "[$(date -u)] LOG: COMMIT"
+        echo "[$(date -u)] LOG: COMMIT and PUSH"
         git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
+        git push originpat
 
         USER_NEW_TAG="${USER_NEW_VERSION}b"
         echo "[$(date -u)] LOG: ADD TAG $USER_NEW_TAG"
         git tag $USER_NEW_TAG
 
         echo "[$(date -u)] LOG: PUSH"
+        git push originpat --follow-tags
         git push originpat --tags
 
       displayName: 'Version Bump'
