@@ -28,8 +28,8 @@ stages:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
     - script: |
-        echo "[$(date -u)] LOG: USER_PAT: $USER_PAT"
-        REPO_URL_REPLACE="$USER_PAT@github"
+        echo "[$(date -u)] LOG: USER_GITHUB_TOKEN: $(USER_GITHUB_TOKEN)"
+        REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
 
         echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
