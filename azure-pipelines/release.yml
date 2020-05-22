@@ -37,8 +37,8 @@ stages:
         git checkout $VAR_REPO_BRANCHNAME -f
 
         echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
-        git config --global user.name '$USER_NAME'
-        git config --global user.email '$USER_EMAIL'
+        git config --global user.name '$(USER_NAME)'
+        git config --global user.email '$(USER_EMAIL)'
         git remote add originpat $REPO_URL_PAT
         git remote -v
       displayName: 'Checkout and Config'
@@ -47,7 +47,7 @@ stages:
         LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
         echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
 
-        if [ "$LAST_AUTHOR" = "$USER_NAME" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+        if [ "$LAST_AUTHOR" = "$(USER_NAME)" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
       displayName: 'Validation'
 
     - script: |
@@ -59,25 +59,26 @@ stages:
         echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
 
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
-        git commit -a -m "$USER_COMMIT_MESSAGE $USER_NEW_VERSION"
+        git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
         git push originpat
-      name: vbump
+
+
       displayName: 'Version Bump'
 
-    - script: |
-        echo "[$(date -u)] LOG: GET LATEST TAG:"
-        git describe --tags $(git rev-list --tags --max-count=1)
+    #- script: |
+    #    echo "[$(date -u)] LOG: GET LATEST TAG:"
+    #    git describe --tags $(git rev-list --tags --max-count=1)
 
-        echo "[$(date -u)] LOG: ADD TAG $VAR_BUILD_NUMBER"
-        git tag $VAR_BUILD_NUMBER
+    #    echo "[$(date -u)] LOG: ADD TAG $VAR_BUILD_NUMBER"
+    #    git tag $VAR_BUILD_NUMBER
 
-        echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
-        git describe --tags $(git rev-list --tags --max-count=1)
+    #    echo "[$(date -u)] LOG: GET CURRENT LATEST TAG:"
+    #    git describe --tags $(git rev-list --tags --max-count=1)
 
-        echo "[$(date -u)] LOG: PUSH TAG:"
-        git push originpat --follow-tags
-        git push originpat --tags
-      displayName: 'Add Tag'
+    #    echo "[$(date -u)] LOG: PUSH TAG:"
+    #    git push originpat --follow-tags
+    #    git push originpat --tags
+    #  displayName: 'Add Tag'
 
 - stage: Testing
   dependsOn: Versioning
@@ -95,7 +96,7 @@ stages:
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
           git checkout $VAR_REPO_BRANCHNAME -f
 
-          RELEASE_VERSION=$(node -p "require('./package.json').version")
+          RELEASE_VERSION=$(node -p "require('./package.json').version")b
           echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
@@ -109,8 +110,9 @@ stages:
           repositoryName: 'LianwMS/autorest.az'
           action: 'create'
           target: '$(getVersions.commit)'
-          tagSource: 'userSpecifiedTag'
-          tag: '$(getVersions.release)'
+          tagSource: 'gitTag'
+          #tagSource: 'userSpecifiedTag'
+          #tag: '$(getVersions.release)'
           isPreRelease: true
           addChangeLog: false
 
