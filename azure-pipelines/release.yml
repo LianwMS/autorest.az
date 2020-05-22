@@ -115,7 +115,7 @@ stages:
 
           echo "[$(date -u)] LOG: PWD TO $PWD"
           echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
-          for file in $(Build.ArtifactStagingDirectory)/*.tgz 
+          for file in $PWD/*.tgz 
           do
             echo "[$(date -u)] LOG: $file"
           done
@@ -138,11 +138,15 @@ stages:
           gitHubConnection: 'amecodegenbot'
           repositoryName: 'LianwMS/autorest.az'
           action: 'create'
-          target: '$(getVersions.commit)'
+          target: '$(GetVersions.commit)'
           tagSource: 'userSpecifiedTag'
-          tag: '$(getVersions.release)'
+          tag: '$(GetVersions.release)'
+          assets: |
+            $(Build.ArtifactStagingDirectory)/*
+            common/temp/artifacts/packages/*.tgz
           isPreRelease: true
-          addChangeLog: false
+          changeLogCompareToRelease: 'lastNonDraftRelease'
+          changeLogType: 'commitBased'
 
 - stage: PublicRelease
   dependsOn: Testing
