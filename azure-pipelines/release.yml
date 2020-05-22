@@ -22,7 +22,7 @@ stages:
   pool:
     vmImage: 'ubuntu-latest'
   jobs:
-  - job: versionbump
+  - job: VersionBump
     steps:
     - task: NodeTool@0
       inputs:
@@ -62,14 +62,6 @@ stages:
         git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
         git push originpat
 
-        #USER_NEW_TAG="${USER_NEW_VERSION}b"
-        #echo "[$(date -u)] LOG: ADD TAG $USER_NEW_TAG"
-        #git tag $USER_NEW_TAG
-
-        #echo "[$(date -u)] LOG: PUSH"
-        #git push originpat --follow-tags
-        #git push originpat --tags
-
       displayName: 'Version Bump'
 
     #- script: |
@@ -91,13 +83,13 @@ stages:
   dependsOn: Versioning
   condition: succeeded()
   jobs:
-    - job: e2e
+    - job: E2E
 
 - stage: PrivateRelease
   dependsOn: Testing
   condition: succeeded()
   jobs:
-    - job: github
+    - job: Github
       steps:
       - script: |
           echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
@@ -117,7 +109,6 @@ stages:
           repositoryName: 'LianwMS/autorest.az'
           action: 'create'
           target: '$(getVersions.commit)'
-          #tagSource: 'gitTag'
           tagSource: 'userSpecifiedTag'
           tag: '$(getVersions.release)'
           isPreRelease: true
