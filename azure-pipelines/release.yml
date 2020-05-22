@@ -16,54 +16,27 @@ variables:
   VAR_REPO_URL: $(Build.Repository.Uri)
   VAR_REPO_BRANCHNAME: $(Build.SourceBranchName)
   VAR_BUILD_NUMBER: $(Build.BuildNumber)
+  VAR_BUILD_VERSION: $(Build.SourceVersion)
 
 stages:
-- stage: Versioning
-  pool:
-    vmImage: 'ubuntu-18.04'
+- stage: Validation
   jobs:
-  - job: VersionBump
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '10.17.0'
-      displayName: 'Install Node.js'
-    - script: |
-        REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
-        REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
+    - job: Check
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - script: |
+          LAST_TAG_COMMIT_HASH=$(git rev-list --tags --max-count=1)
+          echo "[$(date -u)] LOG: LAST_TAG_COMMIT_HASH: $LAST_TAG_COMMIT_HASH"
 
-        echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
-        git checkout $VAR_REPO_BRANCHNAME -f
-
-        echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
-        git config --global user.name '$(USER_NAME)'
-        git config --global user.email '$(USER_EMAIL)'
-        git remote add originpat $REPO_URL_PAT
-        git remote -v
-      displayName: 'Checkout and Config'
-
-    - script: |
-        LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
-        echo "[$(date -u)] LOG: GET LAST COMMIT AUTHOR: $LAST_AUTHOR"
-
-        if [ "$LAST_AUTHOR" = "$(USER_NAME)" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
-      displayName: 'Validation'
-
-    - script: |
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
-
-        USER_NEW_VERSION=$(npm version --git-tag-version=false patch)
-
-        echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
-
-        echo "[$(date -u)] LOG: COMMIT and PUSH"
-        git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
-        git push originpat
-      displayName: 'Version Bump'
-
+          LAST_TAG=$(git describe --tags $LAST_TAG_COMMIT_HASH)
+          echo "[$(date -u)] LOG: LAST_TAG: $LAST_TAG"
+          echo "[$(date -u)] LOG: VAR_BUILD_VERSION: $VAR_BUILD_VERSION"
+          if [ "$LAST_TAG_COMMIT_HASH" = "$VAR_BUILD_VERSION" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+      displayName: 'Check Tag'
+    
 - stage: Testing
-  dependsOn: Versioning
+  dependsOn: Validation
   condition: succeeded()
   jobs:
     - job: E2E
@@ -97,7 +70,10 @@ stages:
           echo "[$(date -u)] LOG: BUILD PACKAGE"
           npx @microsoft/rush publish --publish --pack --include-all --tag latest
 
-          RELEASE_VERSION="$(node -p "require('./package.json').version")b"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+
+          RELEASE_VERSION="$(npm version --git-tag-version=false patch)-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: CURRENT VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
@@ -120,8 +96,50 @@ stages:
           changeLogCompareToRelease: 'lastNonDraftRelease'
           changeLogType: 'commitBased'
 
+
+- stage: Versioning
+  dependsOn: PrivateRelease
+  condition: succeeded()
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: VersionBump
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '10.17.0'
+      displayName: 'Install Node.js'
+    - script: |
+        REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
+        REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
+
+        echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
+        git checkout $VAR_REPO_BRANCHNAME -f
+        git pull
+
+        echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
+        git config --global user.name '$(USER_NAME)'
+        git config --global user.email '$(USER_EMAIL)'
+        git remote add originpat $REPO_URL_PAT
+        git remote -v
+      displayName: 'Checkout and Config'
+
+    - script: |
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+
+        USER_NEW_VERSION=$(npm version --git-tag-version=false patch)
+
+        echo "[$(date -u)] LOG: NEW VERSION: $USER_NEW_VERSION"
+
+        echo "[$(date -u)] LOG: COMMIT and PUSH"
+        git commit -a -m "$(USER_COMMIT_MESSAGE) $USER_NEW_VERSION"
+        git push originpat
+      displayName: 'Version Bump'
+
+
 - stage: PublicRelease
-  dependsOn: Testing
+  dependsOn: PrivateRelease
   condition: succeeded()
   jobs:
     - deployment: npmjs
@@ -138,6 +156,9 @@ stages:
                 displayName: 'Install Node.js'
 
               - script: |
+                  echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
+                  git checkout $VAR_REPO_BRANCHNAME -f
+
                   # ensure latest npm is installed
                   npm install -g npm 
 
