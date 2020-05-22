@@ -29,22 +29,20 @@ stages:
         echo "[$(date -u)] LOG: Build.Repository.Name: $(Build.Repository.Name)"
         echo "[$(date -u)] LOG: Build.Repository.Provider: $(Build.Repository.Provider)"
         echo "[$(date -u)] LOG: Build.Repository.Uri: $(Build.Repository.Uri)"
-        echo "[$(date -u)] LOG: Build.SourceVersion: $(Build.SourceVersion)"
         echo "[$(date -u)] LOG: Build.SourceVersionMessage: $(Build.SourceVersionMessage)"
-        echo "[$(date -u)] LOG: Build.Repository.Git.SubmoduleCheckout: $(Build.Repository.Git.SubmoduleCheckout)"
-        echo "[$(date -u)] LOG: user.githubToken: $(user.githubToken)"
-        echo "[$(date -u)] LOG: user.name: $(user.name)"
-        echo "[$(date -u)] LOG: user.email: $(user.email)"
         echo "[$(date -u)] LOG: user.commitMessage: $(user.commitMessage)"
+
+        REPO_URL=${Build_Repository_Uri/'github'/$(user.githubToken)@github}
+        echo "[$(date -u)] LOG: REPO_URL: $REPO_URL"
 
         echo "[$(date -u)] LOG: CHECKOUT TO $(Build.SourceBranchName)"
         git checkout $(Build.SourceBranchName) -f
+        echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
         git config --global user.name '$(user.name)'
         git config --global user.email '$(user.email)'
-        git remote -v
         git remote add originpat 'https://$(user.githubToken)@github.com/LianwMS/autorest.az.git'
         git remote -v
-      displayName: 'Checkout'
+      displayName: 'Checkout and Config'
 
     - script: |
         LAST_AUTHOR=$(git log -1 --pretty=format:'%an')
@@ -54,22 +52,18 @@ stages:
       displayName: 'Validation'
 
     - script: |
-        echo "[$(date -u)] LOG: SET VARIABLES"
-        REMOTE_REPO=https://$(user.githubToken)@github.com/LianwMS/autorest.az.git
-
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+
         NEW_VERSION=$(npm version --git-tag-version=false patch)
         echo "[$(date -u)] LOG: NEW VERSION: $NEW_VERSION"
+
         echo "[$(date -u)] LOG: COMMIT AND PUSH:"
         git commit -a -m "$(user.commitMessage) $NEW_VERSION"
         git push originpat
       displayName: 'Version Bump'
 
     - script: |
-        echo "[$(date -u)] LOG: SET VARIABLES"
-        REMOTE_REPO=https://$(user.githubtoken)@github.com/LianwMS/autorest.az.git
-
         echo "[$(date -u)] LOG: GET LATEST TAG:"
         git describe --tags $(git rev-list --tags --max-count=1)
 
