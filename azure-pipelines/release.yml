@@ -92,8 +92,8 @@ stages:
           RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
-          
-          for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/*.tgz 
+
+          for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/*.tgz 
           do
             echo "[$(date -u)] LOG: FILE: $file"
           done
@@ -107,7 +107,7 @@ stages:
           tagSource: 'userSpecifiedTag'
           tag: '$(GetVersions.release)'
           assets: |
-            $(VAR_BUILD_ARTIFICTSTAGINGDIRECTORY)/* 
+            $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/* 
           isPreRelease: true
           changeLogCompareToRelease: 'lastNonDraftRelease'
           changeLogType: 'commitBased'
@@ -140,7 +140,7 @@ stages:
 
                   echo "[$(date -u)] LOG: PUBLISH THE PACKAGES"
                   echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
-                  for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/*.tgz 
+                  for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/*.tgz 
                   do
                     echo "[$(date -u)] LOG: FILE: $file"
                   # common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
