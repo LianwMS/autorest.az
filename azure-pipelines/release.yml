@@ -18,6 +18,7 @@ variables:
   VAR_BUILD_NUMBER: $(Build.BuildNumber)
   VAR_BUILD_VERSION: $(Build.SourceVersion)
   VAR_BUILD_RESION: $(Build.Reason)
+  VAR_BUILD_ARTIFICTSTAGINGDIRECTORY: $(Build.ArtifactStagingDirectory)
 
 stages:
 - stage: Build
@@ -42,7 +43,7 @@ stages:
           npx @microsoft/rush rebuild 
 
           echo "[$(date -u)] LOG: BUILD PACKAGE"
-          npx @microsoft/rush publish --publish --pack --include-all --tag latest
+          npx @microsoft/rush publish --publish --pack --release-folder $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY --include-all --tag latest
         displayName: 'Pack'
       - script: |
           echo "[$(date -u)] LOG: Build.ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
@@ -53,16 +54,6 @@ stages:
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
           ArtifactName: 'drop1'
-          publishLocation: 'Container'
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$PWD'
-          ArtifactName: 'drop2'
-          publishLocation: 'Container'
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: 'common/temp/artifacts/packages/*.tgz'
-          ArtifactName: 'drop3'
           publishLocation: 'Container'
 - stage: TryDownload
   dependsOn: Build
@@ -77,19 +68,7 @@ stages:
           buildType: 'current'
           downloadType: 'single'
           artifactName: 'drop1'
-          downloadPath: '$(System.ArtifactsDirectory)'
-      - task: DownloadBuildArtifacts@0
-        inputs:
-          buildType: 'current'
-          downloadType: 'single'
-          artifactName: 'drop2'
-          downloadPath: '$(System.ArtifactsDirectory)'
-      - task: DownloadBuildArtifacts@0
-        inputs:
-          buildType: 'current'
-          downloadType: 'single'
-          artifactName: 'drop3'
-          downloadPath: '$(System.ArtifactsDirectory)'
+          downloadPath: '$VAR_BUILD_ARTIFICTSTAGINGDIRECTORY'
 - stage: Test
   dependsOn: Build
   condition: and(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
