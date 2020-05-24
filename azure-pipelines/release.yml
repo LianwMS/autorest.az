@@ -45,14 +45,51 @@ stages:
           npx @microsoft/rush publish --publish --pack --include-all --tag latest
         displayName: 'Pack'
       - script: |
-          echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
+          echo "[$(date -u)] LOG: Build.ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
+          echo "[$(date -u)] LOG: PWD : $PWD"
+          echo "[$(date -u)] LOG: System.ArtifactsDirectory: $(System.ArtifactsDirectory)"
         displayName: 'Vew some var'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'drop'
+          ArtifactName: 'drop1'
           publishLocation: 'Container'
-
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$PWD'
+          ArtifactName: 'drop2'
+          publishLocation: 'Container'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: 'common/temp/artifacts/packages/*.tgz'
+          ArtifactName: 'drop3'
+          publishLocation: 'Container'
+- stage: TryDownload
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - job: Download
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'drop1'
+          downloadPath: '$(System.ArtifactsDirectory)'
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'drop2'
+          downloadPath: '$(System.ArtifactsDirectory)'
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'drop3'
+          downloadPath: '$(System.ArtifactsDirectory)'
 - stage: Test
   dependsOn: Build
   condition: and(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
