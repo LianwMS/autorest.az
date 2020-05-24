@@ -22,8 +22,8 @@ variables:
 stages:
 - stage: Build
   jobs:
-    -job: BuildAndPack
-     pool:
+    - job: BuildAndPack
+      pool:
         vmImage: 'ubuntu-latest'
       steps:
       - task: NodeTool@0
