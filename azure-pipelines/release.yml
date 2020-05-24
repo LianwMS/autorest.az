@@ -18,8 +18,7 @@ variables:
   VAR_BUILD_NUMBER: $(Build.BuildNumber)
   VAR_BUILD_VERSION: $(Build.SourceVersion)
   VAR_BUILD_RESION: $(Build.Reason)
-  VAR_BUILD_ARTIFICTSTAGINGDIRECTORY: $(Build.ArtifactStagingDirectory)
-  VAR_DROP_NAME: 'drop'
+  VAR_ARIFACT_NAME: "drop"
 
 stages:
 - stage: Build
@@ -44,12 +43,12 @@ stages:
           npx @microsoft/rush rebuild 
 
           echo "[$(date -u)] LOG: BUILD PACKAGE"
-          npx @microsoft/rush publish --publish --pack --release-folder $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY --include-all --tag latest
+          npx @microsoft/rush publish --publish --pack --release-folder $(Build.ArtifactStagingDirectory) --include-all --tag latest
         displayName: 'Build and Pack'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: '$VAR_DROP_NAME'
+          ArtifactName: '$VAR_ARIFACT_NAME'
           publishLocation: 'Container'
 
 - stage: Test
@@ -84,8 +83,8 @@ stages:
         inputs:
           buildType: 'current'
           downloadType: 'single'
-          artifactName: '$VAR_DROP_NAME'
-          downloadPath: '$VAR_BUILD_ARTIFICTSTAGINGDIRECTORY'
+          artifactName: '$VAR_ARIFACT_NAME'
+          downloadPath: '$(Build.ArtifactStagingDirectory)'
       - script: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
@@ -93,7 +92,7 @@ stages:
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
-          for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/*.tgz 
+          for file in $(Build.ArtifactStagingDirectory)/$VAR_ARIFACT_NAME/*.tgz
           do
             echo "[$(date -u)] LOG: FILE: $file"
           done
@@ -107,7 +106,7 @@ stages:
           tagSource: 'userSpecifiedTag'
           tag: '$(GetVersions.release)'
           assets: |
-            $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/* 
+            $(Build.ArtifactStagingDirectory)/$VAR_ARIFACT_NAME/* 
           isPreRelease: true
           changeLogCompareToRelease: 'lastNonDraftRelease'
           changeLogType: 'commitBased'
@@ -132,15 +131,15 @@ stages:
                 inputs:
                   buildType: 'current'
                   downloadType: 'single'
-                  artifactName: '$VAR_DROP_NAME'
-                  downloadPath: '$VAR_BUILD_ARTIFICTSTAGINGDIRECTORY'
+                  artifactName: '$VAR_ARIFACT_NAME'
+                  downloadPath: '$(Build.ArtifactStagingDirectory)'
               - script: |
                   echo "[$(date -u)] LOG: ENSURE LATEST NPM IS INSTALLED"
                   npm install -g npm 
 
                   echo "[$(date -u)] LOG: PUBLISH THE PACKAGES"
                   echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
-                  for file in $VAR_BUILD_ARTIFICTSTAGINGDIRECTORY/$VAR_DROP_NAME/*.tgz 
+                  for file in $(Build.ArtifactStagingDirectory)/$VAR_ARIFACT_NAME/*.tgz
                   do
                     echo "[$(date -u)] LOG: FILE: $file"
                   # common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
