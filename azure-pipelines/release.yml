@@ -92,11 +92,6 @@ stages:
           RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
-
-          for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
-          do
-            echo "[$(date -u)] LOG: FILE: $file"
-          done
         name: GetVersions
       - task: GitHubRelease@1
         inputs:
@@ -114,7 +109,7 @@ stages:
 
 - stage: PublicRelease
   dependsOn: Test
-  condition: succeeded()
+  condition: or(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
   jobs:
     - deployment: npmjs
       environment: az-npm-release
@@ -143,7 +138,7 @@ stages:
                   for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
                   do
                     echo "[$(date -u)] LOG: FILE: $file"
-                  # common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
+                    #common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
                   done
                   rm ./.npmrc
                 displayName: Publish
@@ -179,7 +174,6 @@ stages:
         git tag $CURRENT_VERSION
 
         echo "[$(date -u)] LOG: PUSH TAG:"
-        #git push originpat --follow-tags
         git push originpat --tags
       displayName: 'Add Public Release Tag'
     - script: |
