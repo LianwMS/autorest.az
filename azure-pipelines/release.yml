@@ -54,13 +54,13 @@ stages:
 
 - stage: Test
   dependsOn: Build
-  condition: and(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
+  condition: succeeded()
   jobs:
     - job: E2E
 
 - stage: PrivateRelease
   dependsOn: Test
-  condition: succeeded()
+  condition: or(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
   jobs:
     - job: Github
       pool:
@@ -172,7 +172,7 @@ stages:
         git tag $CURRENT_VERSION
 
         echo "[$(date -u)] LOG: PUSH TAG:"
-        git push originpat --follow-tags
+        #git push originpat --follow-tags
         git push originpat --tags
       displayName: 'Add Public Release Tag'
     - script: |
