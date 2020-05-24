@@ -48,7 +48,7 @@ stages:
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: '$VAR_ARIFACT_NAME'
+          ArtifactName: $VAR_ARIFACT_NAME
           publishLocation: 'Container'
 
 - stage: Test
