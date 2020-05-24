@@ -20,13 +20,47 @@ variables:
   VAR_BUILD_RESION: $(Build.Reason)
 
 stages:
-- stage: Testing
-  condition: succeeded()
+- stage: Build
+  jobs:
+    -job: BuildAndPack
+     pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '10.17.0'
+        displayName: 'Install Node.js'
+      - script: |
+          echo "[$(date -u)] LOG: ENSURE LATEST NPM IS INSTALLED"
+          npm install -g npm
+
+          echo "[$(date -u)] LOG: MAKE SURE THE VERSIONS ARE ALL SYNCHRONIZED AND PULL IN DEPENDENCIES"
+          npx @microsoft/rush sync-versions
+          npx @microsoft/rush update 
+
+          echo "[$(date -u)] LOG: COMPILE THE CODE"
+          npx @microsoft/rush rebuild 
+
+          echo "[$(date -u)] LOG: BUILD PACKAGE"
+          npx @microsoft/rush publish --publish --pack --include-all --tag latest
+        displayName: 'Pack'
+      - script: |
+          echo "[$(date -u)] LOG: ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)"
+        displayName: 'Vew some var'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
+
+- stage: Test
+  dependsOn: Build
+  condition: and(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
   jobs:
     - job: E2E
 
 - stage: PrivateRelease
-  dependsOn: Testing
+  dependsOn: Test
   condition: succeeded()
   jobs:
     - job: Github
@@ -45,7 +79,7 @@ stages:
           echo "[$(date -u)] LOG: LAST_TAG: $LAST_TAG"
           echo "[$(date -u)] LOG: VAR_BUILD_VERSION: $VAR_BUILD_VERSION"
           echo "[$(date -u)] LOG: VAR_BUILD_RESION: $VAR_BUILD_RESION"
-          if [ "$LAST_TAG_COMMIT_HASH" = "$VAR_BUILD_VERSION" && "$VAR_BUILD_RESION" = "Schedule" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
+          if [ "$LAST_TAG_COMMIT_HASH" = "$VAR_BUILD_VERSION" ]; then echo "Cancel pipeline as no new commit"; exit 1; fi
         name: Validation
       - script: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -54,13 +88,10 @@ stages:
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
 
-          COMMIT_VERSION=$(git log --pretty=%H -1)
-          echo "[$(date -u)] LOG: COMMIT VERSION: $COMMIT_VERSION"
-          echo "##vso[task.setvariable variable=commit;isOutput=true]$COMMIT_VERSION"
         name: GetVersions
       - script: |
-          echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
-          git checkout $VAR_REPO_BRANCHNAME -f
+          #echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
+          #git checkout $VAR_REPO_BRANCHNAME -f
 
           echo "[$(date -u)] LOG: ENSURE LATEST NPM IS INSTALLED"
           npm install -g npm
@@ -80,7 +111,7 @@ stages:
           gitHubConnection: 'amecodegenbot'
           repositoryName: 'LianwMS/autorest.az'
           action: 'create'
-          target: '$(GetVersions.commit)'
+          target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
           tag: '$(GetVersions.release)'
           assets: |
@@ -91,7 +122,7 @@ stages:
           changeLogType: 'commitBased'
 
 - stage: PublicRelease
-  dependsOn: PrivateRelease
+  dependsOn: Test
   condition: succeeded()
   jobs:
     - deployment: npmjs
@@ -108,9 +139,6 @@ stages:
                 displayName: 'Install Node.js'
 
               - script: |
-                  echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
-                  git checkout $VAR_REPO_BRANCHNAME -f
-
                   # ensure latest npm is installed
                   npm install -g npm 
 
@@ -125,14 +153,14 @@ stages:
                   npx @microsoft/rush publish --publish --pack --include-all --tag latest
 
                   # publish the packages (tag as preview by default)
-                  echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
-                  for file in common/temp/artifacts/packages/*.tgz 
-                  do
-                   common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
-                  done
-                  rm ./.npmrc
+                  #echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc 
+                  #for file in common/temp/artifacts/packages/*.tgz 
+                  #do
+                  # common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
+                  #done
+                  #rm ./.npmrc
 
-- stage: Versioning
+- stage: Version
   dependsOn: PublicRelease
   condition: succeeded()
   pool:
@@ -148,18 +176,28 @@ stages:
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
 
-        echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
-        git checkout $VAR_REPO_BRANCHNAME -f
-        git pull
-
         echo "[$(date -u)] LOG: CONFIG NAME, EMAIL AND REMOTE"
         git config --global user.name '$(USER_NAME)'
         git config --global user.email '$(USER_EMAIL)'
         git remote add originpat $REPO_URL_PAT
         git remote -v
-      displayName: 'Checkout and Config'
-
+      displayName: 'Config'
     - script: |
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+
+        echo "[$(date -u)] LOG: ADD TAG: $CURRENT_VERSION"
+        git tag $CURRENT_VERSION
+
+        echo "[$(date -u)] LOG: PUSH TAG:"
+        git push originpat --follow-tags
+        git push originpat --tags
+      displayName: 'Add Public Release Tag'
+    - script: |
+        echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
+        git checkout $VAR_REPO_BRANCHNAME -f
+        git pull
+
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
