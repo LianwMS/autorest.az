@@ -108,8 +108,7 @@ stages:
             $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
           isPreRelease: true
           changeLogCompareToRelease: 'lastNonDraftRelease'
-          changeLogType: 'issueBased'
-          changeLogLabels: 
+          changeLogType: 'commitBased'
 
 - stage: PublicRelease
   dependsOn: Test
