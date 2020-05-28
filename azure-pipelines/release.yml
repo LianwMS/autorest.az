@@ -96,7 +96,7 @@ stages:
       - task: GitHubRelease@1
         inputs:
           gitHubConnection: 'amecodegenbot'
-          repositoryName: 'Azure/autorest.az'
+          repositoryName: '$(Build.Repository.Name)'
           action: 'create'
           target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
@@ -111,6 +111,39 @@ stages:
   dependsOn: Test
   condition: or(succeeded(), ne(variables['USER_SKIP_TEST'], 'true'))
   jobs:
+    - deployment: Github
+      environment: az-npm-release
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - task: DownloadBuildArtifacts@0
+                inputs:
+                  buildType: 'current'
+                  downloadType: 'single'
+                  artifactName: '$(VAR_ARIFACT_NAME)'
+                  downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+              - script: |
+                  CURRENT_VERSION=$(node -p "require('./package.json').version")
+                  echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+                  echo "##vso[task.setvariable variable=release;isOutput=true]$CURRENT_VERSION"
+                name: GetVersions
+              - task: GitHubRelease@1
+                inputs:
+                  gitHubConnection: 'amecodegenbot'
+                  repositoryName: '$(Build.Repository.Name)'
+                  action: 'create'
+                  target: '$(Build.SourceVersion)'
+                  tagSource: 'userSpecifiedTag'
+                  tag: '$(GetVersions.release)'
+                  assets: |
+                    $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
+                  releaseNotesFilePath: './RELEASE_NOTE.md'
+                  changeLogCompareToRelease: 'lastFullRelease'
+                  changeLogType: 'commitBased'
+
     - deployment: npmjs
       environment: az-npm-release
       pool:
@@ -138,7 +171,7 @@ stages:
                   for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
                   do
                     echo "[$(date -u)] LOG: FILE: $file"
-                    common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
+                    #common/temp/pnpm-local/node_modules/.bin/pnpm publish $file --tag latest --access public || echo no-worries 
                   done
                   rm ./.npmrc
                 displayName: Publish
@@ -166,16 +199,16 @@ stages:
         git remote add originpat $REPO_URL_PAT
         git remote -v
       displayName: 'Config'
-    - script: |
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+#    - script: |
+#        CURRENT_VERSION=$(node -p "require('./package.json').version")
+#        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
 
-        echo "[$(date -u)] LOG: ADD TAG: $CURRENT_VERSION"
-        git tag $CURRENT_VERSION
+#        echo "[$(date -u)] LOG: ADD TAG: $CURRENT_VERSION"
+#        git tag $CURRENT_VERSION
 
-        echo "[$(date -u)] LOG: PUSH TAG:"
-        git push originpat --tags
-      displayName: 'Add Public Release Tag'
+#        echo "[$(date -u)] LOG: PUSH TAG:"
+#        git push originpat --tags
+#      displayName: 'Add Public Release Tag'
     - script: |
         echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
         git checkout $VAR_REPO_BRANCHNAME -f
