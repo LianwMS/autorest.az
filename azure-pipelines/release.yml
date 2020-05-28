@@ -167,7 +167,7 @@ stages:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
         echo "##vso[task.setvariable variable=release;isOutput=true]$CURRENT_VERSION"
-        name: GetVersions
+      name: GetVersions
     - task: GitHubRelease@1
       inputs:
         gitHubConnection: 'amecodegenbot'
