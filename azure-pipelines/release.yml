@@ -91,7 +91,7 @@ stages:
           echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
           RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
-          RELEAST_NOTE="Adding \"--use=$(Build.Repository.Uri)/release/download/$RELEASE_VERSION/autorest-az-$CURRENT_VERSION.tgz\" argument when triggering  \"autorest\" or \"gen\" command to generate code"
+          RELEAST_NOTE="Adding \"--use=$(Build.Repository.Uri)/releases/download/$RELEASE_VERSION/autorest-az-$CURRENT_VERSION.tgz\" argument when triggering  \"autorest\" or \"gen\" command to generate code"
           echo "[$(date -u)] LOG: RELEASE NOTE: $RELEAST_NOTE"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
           echo "##vso[task.setvariable variable=note;isOutput=true]$RELEAST_NOTE"
@@ -184,8 +184,7 @@ stages:
         assets: |
           $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
         releaseNotesFilePath: './RELEASE_NOTE.md'
-        changeLogCompareToRelease: 'lastFullRelease'
-        changeLogType: 'commitBased'
+        addChangeLog: false
     - script: |
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
