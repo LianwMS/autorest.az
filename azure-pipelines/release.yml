@@ -177,6 +177,7 @@ stages:
                 displayName: Publish
                 #failOnStderr: true
 
+
 - stage: Version
   dependsOn: PublicRelease
   condition: succeeded()
@@ -189,6 +190,30 @@ stages:
       inputs:
         versionSpec: '10.17.0'
       displayName: 'Install Node.js'
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: '$(VAR_ARIFACT_NAME)'
+        downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+    - script: |
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
+        echo "##vso[task.setvariable variable=release;isOutput=true]$CURRENT_VERSION"
+        name: GetVersions
+    - task: GitHubRelease@1
+      inputs:
+        gitHubConnection: 'amecodegenbot'
+        repositoryName: '$(Build.Repository.Name)'
+        action: 'create'
+        target: '$(Build.SourceVersion)'
+        tagSource: 'userSpecifiedTag'
+        tag: '$(GetVersions.release)'
+        assets: |
+          $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
+        releaseNotesFilePath: './RELEASE_NOTE.md'
+        changeLogCompareToRelease: 'lastFullRelease'
+        changeLogType: 'commitBased'
     - script: |
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"
         REPO_URL_PAT=${VAR_REPO_URL/'github'/$REPO_URL_REPLACE}
@@ -199,6 +224,7 @@ stages:
         git remote add originpat $REPO_URL_PAT
         git remote -v
       displayName: 'Config'
+    
 #    - script: |
 #        CURRENT_VERSION=$(node -p "require('./package.json').version")
 #        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
