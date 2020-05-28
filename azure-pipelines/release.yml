@@ -91,7 +91,11 @@ stages:
           echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
           RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
+          RELEAST_NOTE="Adding argument \"--use=$(Build.Repository.Uri)\" when tariggering \"autorest\" or \"gen\" command to generate code"
+          echo "[$(date -u)] LOG: RELEASE NOTE: $RELEAST_NOTE"
+          echo "[$(date -u)] LOG: Build.Repository.Uri: $(Build.Repository.Uri)"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
+          echo "##vso[task.setvariable variable=note;isOutput=true]$RELEAST_NOTE"
         name: GetVersions
       - task: GitHubRelease@1
         inputs:
@@ -101,6 +105,8 @@ stages:
           target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
           tag: '$(GetVersions.release)'
+          releaseNotesSource: 'inline'
+          releaseNotesInline: '$(GetVersions.note)'
           assets: |
             $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
           isPreRelease: true
@@ -191,17 +197,6 @@ stages:
         git remote add originpat $REPO_URL_PAT
         git remote -v
       displayName: 'Config'
-    
-#    - script: |
-#        CURRENT_VERSION=$(node -p "require('./package.json').version")
-#        echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
-
-#        echo "[$(date -u)] LOG: ADD TAG: $CURRENT_VERSION"
-#        git tag $CURRENT_VERSION
-
-#        echo "[$(date -u)] LOG: PUSH TAG:"
-#        git push originpat --tags
-#      displayName: 'Add Public Release Tag'
     - script: |
         echo "[$(date -u)] LOG: CHECKOUT TO $VAR_REPO_BRANCHNAME"
         git checkout $VAR_REPO_BRANCHNAME -f
