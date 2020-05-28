@@ -91,7 +91,7 @@ stages:
           echo "[$(date -u)] LOG: CURRENT VERSION: $CURRENT_VERSION"
           RELEASE_VERSION="$CURRENT_VERSION-b.$VAR_BUILD_NUMBER"
           echo "[$(date -u)] LOG: RELEASE VERSION: $RELEASE_VERSION"
-          RELEAST_NOTE="Adding \"--use=$(Build.Repository.Uri)\"/release/download/$(RELEASE_VERSION)/autorest-az-$(CURRENT_VERSION).tgz argument when triggering  \"autorest\" or \"gen\" command to generate code"
+          RELEAST_NOTE="Adding \"--use=$(Build.Repository.Uri)/release/download/$RELEASE_VERSION/autorest-az-$CURRENT_VERSION.tgz\" argument when triggering  \"autorest\" or \"gen\" command to generate code"
           echo "[$(date -u)] LOG: RELEASE NOTE: $RELEAST_NOTE"
           echo "##vso[task.setvariable variable=release;isOutput=true]$RELEASE_VERSION"
           echo "##vso[task.setvariable variable=note;isOutput=true]$RELEAST_NOTE"
@@ -147,7 +147,7 @@ stages:
                   done
                   rm ./.npmrc
                 displayName: Publish
-                #failOnStderr: true
+                failOnStderr: true
 
 
 - stage: Version
