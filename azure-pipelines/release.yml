@@ -183,7 +183,7 @@ stages:
         tag: '$(GetVersions.release)'
         assets: |
           $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
-        releaseNotesFilePath: './RELEASE_NOTE.md'
+        releaseNotesFilePath: './doc/RELEASE_NOTE.md'
         addChangeLog: false
     - script: |
         REPO_URL_REPLACE="$(USER_GITHUB_TOKEN)@github"

@@ -1,6 +1,6 @@
 # What's New 
 # Using Guidelines
-Please refer to [guidelines document](USING_GUIDELINES.md)
+Please refer to [Guideline Document](https://github.com/Azure/autorest.az/blob/master/doc/how-to-generate.md)
 # Support & Doc
 ## Issue Report
 * For any issue found, please file issue at [Github](https://github.com/Azure/autorest.az/issues), Please also file issue to us if you find some doc is missing or more detail is needed.
