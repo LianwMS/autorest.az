@@ -147,7 +147,7 @@ stages:
                   done
                   rm ./.npmrc
                 displayName: Publish
-                failOnStderr: true
+                #failOnStderr: true
 
 
 - stage: Version
