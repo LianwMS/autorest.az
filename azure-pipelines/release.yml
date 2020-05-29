@@ -104,6 +104,7 @@ stages:
           target: '$(Build.SourceVersion)'
           tagSource: 'userSpecifiedTag'
           tag: '$(GetVersions.release)'
+          title: 'autorest.az $(GetVersions.release)'
           releaseNotesSource: 'inline'
           releaseNotesInline: '$(GetVersions.note)'
           assets: |
@@ -181,6 +182,7 @@ stages:
         target: '$(Build.SourceVersion)'
         tagSource: 'userSpecifiedTag'
         tag: '$(GetVersions.release)'
+        title: 'autorest.az $(GetVersions.release)'
         assets: |
           $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
         releaseNotesFilePath: './doc/RELEASE_NOTE.md'
